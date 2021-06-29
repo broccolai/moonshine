@@ -33,7 +33,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * A strategy for selecting the supertype of a class, then its interfaces, then their supertypes before moving on to the
  * supertypes' interfaces and so forth.
- * <p>
+ * 
  * For the given definition:
  * <br><code>
  * interface SuperSuper, SuperA1 extends SuperSuper, SuperA2, SuperA3, SuperB1, SuperB2, SuperB3
@@ -59,7 +59,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *   <li>{@code SuperB3}</li>
  *   <li>No {@code SuperB2}, because {@code A} implements this</li>
  * </ol>
- * </p>
  */
 @ThreadSafe
 public final class StandardSupertypeThenInterfaceSupertypeStrategy implements ISupertypeStrategy {

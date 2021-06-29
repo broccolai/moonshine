@@ -1,6 +1,7 @@
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_9
-    targetCompatibility = sourceCompatibility
+indra {
+    javaVersions {
+        target(9)
+    }
 }
 
 dependencies {

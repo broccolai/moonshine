@@ -1,18 +1,21 @@
 import nl.javadude.gradle.plugins.license.LicensePlugin
 import org.checkerframework.gradle.plugin.CheckerFrameworkPlugin
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin
+import net.kyori.indra.IndraPlugin
+import net.kyori.indra.IndraPublishingPlugin
 import java.util.*
 
 plugins {
     java
     `java-library`
-    `maven-publish`
     checkstyle
     jacoco
     idea
     kotlin("jvm") version "1.5.10"
     id("com.github.hierynomus.license") version "0.16.1"
     id("org.checkerframework") version "0.5.22"
+    id("net.kyori.indra") version "2.0.5"
+    id("net.kyori.indra.publishing") apply false version "2.0.5"
 }
 
 allprojects {
@@ -31,6 +34,8 @@ subprojects {
         plugin<KotlinPlatformJvmPlugin>()
         plugin<LicensePlugin>()
         plugin<CheckerFrameworkPlugin>()
+        apply<IndraPlugin>()
+        apply<IndraPublishingPlugin>()
     }
 
     dependencies {
@@ -65,20 +70,16 @@ subprojects {
                 html.required.set(false)
             }
         }
+    }
 
-        javadoc {
-            val opt = options as StandardJavadocDocletOptions
-            opt.addStringOption("Xdoclint:none", "-quiet")
-
-            opt.encoding("UTF-8")
-            opt.charSet("UTF-8")
-            opt.source("8")
-            doFirst {
-                opt.links(
-                    "https://docs.oracle.com/javase/8/docs/api/"
-                )
-            }
+    indra {
+        javaVersions {
+            minimumToolchain(11)
+            target(8)
         }
+
+        publishReleasesTo("broccolai", "https://repo.broccol.ai/releases")
+        publishSnapshotsTo("broccolai", "https://repo.broccol.ai/snapshots")
     }
 }
 
@@ -90,8 +91,6 @@ allprojects {
     }
 
     extensions.configure(JavaPluginExtension::class) {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = sourceCompatibility
         disableAutoTargetJvm()
     }
 
@@ -115,11 +114,6 @@ allprojects {
         reportsDirectory.set(rootProject.buildDir.resolve("reports").resolve("jacoco"))
     }
 
-    java {
-        withSourcesJar()
-        withJavadocJar()
-    }
-
     tasks {
         compileJava {
             options.compilerArgs.add("-parameters")
@@ -137,32 +131,6 @@ allprojects {
         compileTestKotlin {
             kotlinOptions.jvmTarget = "1.8"
             kotlinOptions.javaParameters = true
-        }
-    }
-
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                from(components["java"])
-            }
-        }
-
-        repositories {
-            maven {
-                name = "proxi-nexus"
-                val repo = if (project.version.toString().endsWith("-SNAPSHOT")) {
-                    "snapshots"
-                } else {
-                    "releases"
-                }
-                url = uri("https://nexus.mardroemmar.dev/repository/maven-$repo/")
-                credentials {
-                    val proxiUser: String? by project
-                    val proxiPassword: String? by project
-                    username = proxiUser
-                    password = proxiPassword
-                }
-            }
         }
     }
 }
