@@ -55,6 +55,45 @@ class SimpleMoonshineSpec : StringSpec({
             .method()
     }
 
+    "broccolai test" {
+        val receiver = mockk<TestableReceiver<String>>()
+        every { receiver.send(any()) } returns Unit
+
+        Moonshine.builder<SomethingElse, TestableReceiver<String>>(typeToken())
+            .receiverLocatorResolver({ _, _ -> IReceiverLocator { _, _, _ -> receiver } }, 1)
+            .sourced { recv, name ->
+                recv shouldBeSameInstanceAs receiver
+                name shouldBe "test"
+                "Hello, %placeholder2ButCool%!"
+            }
+            .rendered<String, String> { _, msg, placeholders, _, _ ->
+                placeholders.entries.fold(msg) { acc, (key, value) ->
+                    acc.replace("%$key%", value)
+                }
+            }
+            .sent(TestableReceiver<String>::send)
+            .resolvingWithStrategy(
+                StandardPlaceholderResolverStrategy(
+                    StandardSupertypeThenInterfaceSupertypeStrategy(
+                        true
+                    )
+                )
+            )
+            .weightedPlaceholderResolver(
+                typeToken<InterfaceObject>(),
+                { placeholderName, value, receiver, owner, method, parameters ->
+                    mapOf(
+                        placeholderName to Either.left(ConclusionValue.conclusionValue(value.value())),
+                    )
+                },
+                3
+            )
+            .create()
+            .method2(receiver, ImplObject("heyyy"))
+
+        verify(exactly = 1) { receiver.send("Hello, ${"bromcc".repeat(6)}!") }
+    }
+
     "single, fully fledged method" {
         val receiver = mockk<TestableReceiver<String>>()
         every { receiver.send(any()) } returns Unit
@@ -115,5 +154,23 @@ class SimpleMoonshineSpec : StringSpec({
         fun send(message: T) {
             fail("this must be mocked")
         }
+    }
+
+    interface InterfaceObject {
+        fun value(): String
+    }
+
+    class ImplObject(private val value: String) : InterfaceObject {
+        override fun value(): String {
+            return this.value
+        }
+    }
+
+    interface SomethingElse {
+        @Message("test")
+        fun method2(
+            receiver: TestableReceiver<String>,
+            @Placeholder placeholder: InterfaceObject
+        )
     }
 }
