@@ -1,6 +1,5 @@
 import nl.javadude.gradle.plugins.license.LicensePlugin
 import org.checkerframework.gradle.plugin.CheckerFrameworkPlugin
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin
 import net.kyori.indra.IndraPlugin
 import net.kyori.indra.IndraPublishingPlugin
 import java.util.*
@@ -11,7 +10,6 @@ plugins {
     checkstyle
     jacoco
     idea
-    kotlin("jvm") version "1.5.10"
     id("com.github.hierynomus.license") version "0.16.1"
     id("org.checkerframework") version "0.5.22"
     id("net.kyori.indra") version "2.0.5"
@@ -31,7 +29,6 @@ subprojects {
         plugin<CheckstylePlugin>()
         plugin<JacocoPlugin>()
         plugin<IdeaPlugin>()
-        plugin<KotlinPlatformJvmPlugin>()
         plugin<LicensePlugin>()
         plugin<CheckerFrameworkPlugin>()
         apply<IndraPlugin>()
@@ -44,11 +41,7 @@ subprojects {
 
         testImplementation("org.junit.jupiter:junit-jupiter:5.+")
         testImplementation("org.assertj:assertj-core:3.+")
-        testImplementation(kotlin("stdlib-jdk8"))
-        testImplementation(kotlin("reflect"))
-        testImplementation("io.kotest:kotest-runner-junit5:4.+")
-        testImplementation("io.kotest:kotest-assertions-core:4.+")
-        testImplementation("io.mockk:mockk:1.10.6")
+        testImplementation("org.mockito:mockito-junit-jupiter:3.+")
     }
 
     tasks {
@@ -75,7 +68,7 @@ subprojects {
     indra {
         javaVersions {
             minimumToolchain(11)
-            target(8)
+            target(11)
         }
 
         publishReleasesTo("broccolai", "https://repo.broccol.ai/releases")
@@ -104,7 +97,7 @@ allprojects {
     }
 
     checkstyle {
-        toolVersion = "8.43"
+        toolVersion = "8.44"
         val configRoot = rootProject.projectDir.resolve(".checkstyle")
         configDirectory.set(configRoot)
         configProperties["basedir"] = configRoot.absolutePath
@@ -121,16 +114,8 @@ allprojects {
 
         compileTestJava {
             options.compilerArgs.add("-parameters")
-        }
-
-        compileKotlin {
-            kotlinOptions.jvmTarget = "1.8"
-            kotlinOptions.javaParameters = true
-        }
-
-        compileTestKotlin {
-            kotlinOptions.jvmTarget = "1.8"
-            kotlinOptions.javaParameters = true
+            sourceCompatibility = "11"
+            targetCompatibility = sourceCompatibility
         }
     }
 }
